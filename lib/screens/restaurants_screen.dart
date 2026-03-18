@@ -33,6 +33,8 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
   }
 
   // 🌍 DISTANCE
+  double _deg2rad(double deg) => deg * (pi / 180);
+
   double calculateDistanceKm(
       double lat1, double lon1, double lat2, double lon2) {
     const R = 6371;
@@ -50,14 +52,13 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
     return R * c;
   }
 
-  double _deg2rad(double deg) => deg * (pi / 180);
-
   String formatDistance(OsmPlace place) {
-    final userLat = widget.city.latitude;
-    final userLon = widget.city.longitude;
-
     final d = calculateDistanceKm(
-        userLat, userLon, place.lat, place.lon);
+      widget.city.latitude,
+      widget.city.longitude,
+      place.lat,
+      place.lon,
+    );
 
     if (d < 1) {
       return '📍 ${(d * 1000).toStringAsFixed(0)} m away';
@@ -66,7 +67,7 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
     return '📍 ${d.toStringAsFixed(1)} km away';
   }
 
-  // 🗺️ MAPS FIX (Name statt Koordinaten)
+  // 🗺️ MAPS
   Future<void> openMaps(OsmPlace place) async {
     final query =
         Uri.encodeComponent("${place.name} ${place.city}");
@@ -82,7 +83,7 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
     }
   }
 
-  // 🏆 BADGE SYSTEM (UNVERÄNDERT)
+  // 🏆 BADGE SYSTEM
   Map<String, dynamic> getBadge(int count) {
     if (count >= 100) return {"title": "Legendary Foodie", "emoji": "👑", "colors": [Colors.purple, Colors.black]};
     if (count >= 80) return {"title": "Master Gourmet", "emoji": "🏆", "colors": [Colors.deepPurple, Colors.purple]};
@@ -96,15 +97,15 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
     return {"title": "Beginner", "emoji": "🌱", "colors": [Colors.grey, Colors.grey]};
   }
 
-  // ⭐ RATING (0.1 Schritte)
+  // ⭐ RATING (MIT EMOJI)
   Future<double?> showRatingDialog(BuildContext context) async {
     double rating = 3;
 
     String emoji(double r) {
       if (r >= 4.5) return "🤩";
-      if (r >= 4) return "😍";
-      if (r >= 3) return "🙂";
-      if (r >= 2) return "😐";
+      if (r >= 4.0) return "😍";
+      if (r >= 3.0) return "🙂";
+      if (r >= 2.0) return "😐";
       return "😬";
     }
 
@@ -118,8 +119,14 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(emoji(rating),
-                      style: const TextStyle(fontSize: 32)),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      emoji(rating),
+                      key: ValueKey(emoji(rating)),
+                      style: const TextStyle(fontSize: 36),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     rating.toStringAsFixed(1),
@@ -173,16 +180,12 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
 
     List<OsmPlace> visible = restaurants.where((p) {
       if (searchQuery.isNotEmpty &&
-          !p.name
-              .toLowerCase()
-              .contains(searchQuery.toLowerCase())) {
+          !p.name.toLowerCase().contains(searchQuery.toLowerCase())) {
         return false;
       }
 
       if (selectedLetter != null &&
-          !p.name
-              .toUpperCase()
-              .startsWith(selectedLetter!)) {
+          !p.name.toUpperCase().startsWith(selectedLetter!)) {
         return false;
       }
 
@@ -192,7 +195,6 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
 
     final badge = getBadge(saved.length);
 
-    // ⭐ SORTIERUNG (NEU)
     final sorted = List.of(saved)
       ..sort((a, b) {
         final r = b.rating.compareTo(a.rating);
@@ -206,7 +208,6 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
         children: [
           Column(
             children: [
-              // SEARCH
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextField(
@@ -225,15 +226,13 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Distances are calculated from the city center',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey),
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ),
               ),
 
               const SizedBox(height: 8),
 
-              // FILTER
               SizedBox(
                 height: 50,
                 child: ListView(
@@ -241,19 +240,14 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
                   children: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                       .split('')
                       .map((l) => Padding(
-                            padding:
-                                const EdgeInsets.symmetric(
-                                    horizontal: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: ChoiceChip(
                               label: Text(l),
-                              selected:
-                                  selectedLetter == l,
+                              selected: selectedLetter == l,
                               onSelected: (_) {
                                 setState(() {
                                   selectedLetter =
-                                      selectedLetter == l
-                                          ? null
-                                          : l;
+                                      selectedLetter == l ? null : l;
                                 });
                               },
                             ),
@@ -267,65 +261,50 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
               Expanded(
                 child: ListView(
                   children: visible.map((place) {
-                    final visited = saved.any(
-                        (p) => p.placeId == place.id);
+                    final visited =
+                        saved.any((p) => p.placeId == place.id);
 
                     return Card(
-                      margin:
-                          const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6),
+                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       child: ListTile(
-                        leading:
-                            const Icon(Icons.restaurant),
+                        leading: const Icon(Icons.restaurant),
                         title: Text(place.name),
-                        subtitle:
-                            Text(formatDistance(place)),
+                        subtitle: Text(formatDistance(place)),
                         trailing: Row(
-                          mainAxisSize:
-                              MainAxisSize.min,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon:
-                                  const Icon(Icons.map),
-                              onPressed: () =>
-                                  openMaps(place),
+                              icon: const Icon(Icons.map),
+                              onPressed: () => openMaps(place),
                             ),
                             IconButton(
                               icon: Icon(
-                                visited
-                                    ? Icons.check
-                                    : Icons.add,
-                                color: visited
-                                    ? Colors.green
-                                    : null,
+                                visited ? Icons.check : Icons.add,
+                                color: visited ? Colors.green : null,
                               ),
                               onPressed: () async {
                                 if (visited) return;
 
                                 final rating =
-                                    await showRatingDialog(
-                                        context);
+                                    await showRatingDialog(context);
 
                                 if (rating == null) return;
 
-                                provider.addPlaceToCity(
-                                  cityId:
-                                      widget.city.id,
-                                  place: SavedPlace(
-                                    placeId:
-                                        place.id,
-                                    name: place.name,
-                                    rating: rating,
-                                    userRatingsTotal:
-                                        0,
-                                    address: '',
-                                    category:
-                                        PlaceCategory
-                                            .restaurant,
-                                    visited: true,
-                                  ),
-                                );
+                                // 🔥 FIX HIER
+                                Future.microtask(() {
+                                  provider.addPlaceToCity(
+                                    cityId: widget.city.id,
+                                    place: SavedPlace(
+                                      placeId: place.id,
+                                      name: place.name,
+                                      rating: rating,
+                                      userRatingsTotal: 0,
+                                      address: '',
+                                      category: PlaceCategory.restaurant,
+                                      visited: true,
+                                    ),
+                                  );
+                                });
                               },
                             ),
                           ],
@@ -338,7 +317,7 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
             ],
           ),
 
-          // BOTTOM SHEET
+          // 🔥 BOTTOM SHEET
           DraggableScrollableSheet(
             initialChildSize: 0.12,
             minChildSize: 0.1,
@@ -346,12 +325,8 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
             builder: (context, controller) {
               return Container(
                 decoration: BoxDecoration(
-                  color:
-                      Theme.of(context).cardColor,
-                  borderRadius:
-                      const BorderRadius.vertical(
-                          top:
-                              Radius.circular(20)),
+                  color: Theme.of(context).cardColor,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 child: ListView(
                   controller: controller,
@@ -366,37 +341,26 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // BADGE
                     Padding(
-                      padding:
-                          const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Container(
-                        padding:
-                            const EdgeInsets.all(16),
-                        decoration:
-                            BoxDecoration(
-                          gradient: LinearGradient(
-                              colors:
-                                  badge['colors']),
-                          borderRadius:
-                              BorderRadius.circular(
-                                  16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: badge['colors']),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(
                           children: [
                             Text(
                               badge['emoji'],
-                              style: const TextStyle(
-                                  fontSize: 24),
+                              style: const TextStyle(fontSize: 24),
                             ),
                             const SizedBox(width: 12),
                             Text(
                               "${badge['title']} (${saved.length})",
-                              style:
-                                  const TextStyle(
+                              style: const TextStyle(
                                 color: Colors.white,
-                                fontWeight:
-                                    FontWeight.bold,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
@@ -404,21 +368,15 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
                       ),
                     ),
 
-                    // SORTED LIST
                     ...sorted.map((p) => ListTile(
                           title: Text(p.name),
-                          subtitle: Text(
-                              '⭐ ${p.rating.toStringAsFixed(1)}'),
+                          subtitle: Text('⭐ ${p.rating.toStringAsFixed(1)}'),
                           trailing: IconButton(
-                            icon: const Icon(
-                                Icons.remove),
+                            icon: const Icon(Icons.remove),
                             onPressed: () {
-                              provider
-                                  .removePlaceFromCity(
-                                cityId:
-                                    widget.city.id,
-                                placeId:
-                                    p.placeId,
+                              provider.removePlaceFromCity(
+                                cityId: widget.city.id,
+                                placeId: p.placeId,
                               );
                             },
                           ),
