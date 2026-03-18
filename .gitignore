@@ -1,0 +1,22 @@
+# Flutter
+.dart_tool/
+.packages
+.pub/
+build/
+
+# Android / iOS
+android/.gradle/
+ios/Pods/
+
+# IDE
+.idea/
+
+# Node (WICHTIG!)
+node_modules/
+
+# Misc
+*.log
+*.lock
+
+data/
+osm-pipeline/

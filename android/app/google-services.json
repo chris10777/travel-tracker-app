@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "763475058349",
+    "project_id": "my-favorite-place-6db0a",
+    "storage_bucket": "my-favorite-place-6db0a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:763475058349:android:987b95e8a649211761b024",
+        "android_client_info": {
+          "package_name": "com.example.travel_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "763475058349-qpfbmd2ulv08l6m1ujqmr8qrrj7se36h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.travel_tracker",
+            "certificate_hash": "d60706bff30c17344f69632b66c9825f4b9ac821"
+          }
+        },
+        {
+          "client_id": "763475058349-d0hjvtrqtr3l2ecr9omnuj0lcqj75o1o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7JF3qw7YWrIfus1uhlUCC5GQ-m6ShnB8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "763475058349-d0hjvtrqtr3l2ecr9omnuj0lcqj75o1o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
